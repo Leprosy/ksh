@@ -1,0 +1,115 @@
+﻿<html>
+	<head>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <style>
+            #board {
+                background-color: #ccc;
+                border: 4px solid #bbb;
+                width: 400px;
+                overflow: auto;
+            }
+            #board div {
+                background-color: #fff;
+                width: 90px;
+                height: 90px;
+                float: left;
+                margin: 5px 5px;
+                text-align: center;
+                font-size: 40px;
+                font-weight: bold;
+                font-family: Arial, sans;
+                line-height: 90px;
+            }
+        </style>
+	</head>
+	<body>
+		<div id="board">
+			
+		</div>
+
+		<script>
+            var KSH = {};
+
+            //config object
+            KSH.config = {};
+            KSH.config.h = 4;
+            KSH.config.w = 4;
+            KSH.config.container = '#board';
+
+            //methods
+            KSH.methods = {};
+            KSH.methods.iterate = function(fn) {
+                for (i = 0; i < KSH.config.h; ++i) {
+                    for (j = 0; j < KSH.config.w; ++j) {
+                        fn(j, i, j + '' + i);
+                    }
+                }
+            };
+            KSH.methods.isFull = function() {
+                var full = true;
+
+                KSH.methods.iterate(function(x, y, index) {
+                    if ($('#' + index).html() == '') {
+                        full = false;
+                    }
+                });
+
+                return full;
+            };
+            KSH.methods.drawBoard = function() {
+                KSH.methods.iterate(function (x, y) {
+                    console.log('adding', x, y);
+                    var div = $('<div id="' + x + '' + y + '"></div>');
+                    $(KSH.config.container).append(div);
+                });
+            };
+            KSH.methods.generate = function() {
+                if (KSH.methods.isFull()) {
+                    console.log('we \'re full');
+                    return
+                }
+
+                var x = Math.round(Math.random() * KSH.config.w);
+                var y = Math.round(Math.random() * KSH.config.h);
+                var item = Math.round(Math.random() * 3); //Basic element generation
+                var index = KSH.methods.getIndex(x, y);
+
+                if ($(index).html() == '') {
+                    $(index).html(item);
+                } else {
+                    KSH.methods.generate();
+                }
+            };
+            /* Refactor these */
+            KSH.methods.up = function() {
+                for (j = 1; j < KSH.config.h; ++j) {
+                    for (i = 0; i < KSH.config.w; ++i) {
+                        var index = KSH.methods.getIndex(i, j);
+
+                        if ($(index).html() != '') {
+                            var dj = j - 1;
+                            var dindex = KSH.methods.getIndex(i, dj);
+                            var item = $(index).html();
+
+                            while ($(dindex).html() == '' && dj >= 0) {
+                                $(index).html('');
+                                $(dindex).html(item);
+                                --dj;
+                                index = dindex;
+                                dindex = KSH.methods.getIndex(i, dj);
+                            }
+                        }
+                    }
+                }
+            };
+            KSH.methods.getIndex = function(x, y) {
+                return '#' + x + '' + y;
+            }
+
+            //fire it up
+            KSH.methods.drawBoard();
+            KSH.methods.generate();
+
+		</script>
+	</body>
+</html>
