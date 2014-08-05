@@ -3,47 +3,55 @@
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
         <style>
             #board {
+                position: relative;
                 background-color: #ccc;
-                border: 4px solid #bbb;
-                width: 400px;
+                border: 5px solid #ccc;
+                width: 400;
                 overflow: auto;
+                margin-left: auto;
+                margin-right: auto;
             }
-            #board div {
+            #board div.grid {
                 background-color: #fff;
                 width: 90px;
                 height: 90px;
                 float: left;
-                margin: 5px 5px;
+                margin: 5px;
+            }
+            #board div.tile {
+                position: absolute;
+                background-color: #ff6;
+                width: 90px;
+                height: 90px;
+                margin: 5px;
                 text-align: center;
-                font-size: 40px;
-                font-weight: bold;
+                font-size: 32px;
                 font-family: Arial, sans;
                 line-height: 90px;
+                font-weight: bold;
             }
-            #board div.item {
-                position: relative;
-                background-color: #ff0;
-                margin: 0;
-            }
-            textarea {
-                font-size: 32px;
-            }
+
         </style>
 	</head>
 	<body>
 		<div id="board"></div>
-        <textarea rows="5" cols="8"></textarea>        
+        <textarea rows="5" cols="8"></textarea>
 		<script>
             var KSH = {};
 
             // Config
             KSH.w = 4;
             KSH.h = 4;
-            KSH.len = 90;
+            KSH.len = 100;
             KSH.container = '#board';
             KSH.update = false;
+            KSH.inGame = false;
 
             // Methods
+            KSH.index = function(x, y) {
+                return x + '-' + y;
+            };
+
             KSH.createMatrix = function() {
                 KSH.matrix = new Array(KSH.w);
 
@@ -56,7 +64,17 @@
                 }
             };
 
+            KSH.createGrid = function() {
+                for (j = 0; j < KSH.h; ++j) {
+                    for (i = 0; i < KSH.w; ++i) {
+                        var index = KSH.index(i, j);
+                        $(KSH.container).append($('<div class="grid" id="' + index + '"></div>'));
+                    }
+                }
+            };
+
             KSH.drawMatrix = function() {
+                /* Debug */
                 var str = '';
 
                 for (j = 0; j < KSH.h; ++j) {
@@ -93,13 +111,34 @@
                 var y = Math.round(Math.random() * (KSH.h - 1));
 
                 if (KSH.matrix[x][y] != 0) {
-                    console.log('crap');
                     KSH.generate();
                 } else {
                     KSH.matrix[x][y] = item;
+
+                    /* GUI*/
+                    var tile = $('<div class="tile"></div>');
+                    tile.attr('id', KSH.index(x, y)).html(item).hide().css({
+                        top: y * KSH.len, left: x * KSH.len
+                    });
+
+                    $(KSH.container).append(tile);
+                    tile.fadeIn(1000);
                 }
 
                 return true;
+            };
+
+            KSH.swap = function(x1, y1, x2, y2) {
+                var tile = $("div#" + KSH.index(x1, y1) + ".tile");
+                console.log(tile)
+                tile.animate({
+                    top: y2 * KSH.len, left: x2 * KSH.len
+                },{
+                    duration: 200,
+                    complete: function() {
+                        $(this).attr('id', KSH.index(x2, y2));
+                    }
+                });
             };
 
             KSH.up = function() {
@@ -119,6 +158,7 @@
                                 KSH.matrix[i][dj] = KSH.matrix[i][j];
                                 KSH.matrix[i][j] = 0;
                                 KSH.update = true;
+                                KSH.swap(i, j, i, dj);
                             }
                         }
                     }
@@ -141,6 +181,7 @@
                                 KSH.matrix[i][dj] = KSH.matrix[i][j];
                                 KSH.matrix[i][j] = 0;
                                 KSH.update = true;
+                                KSH.swap(i, j, i, dj);
                             }
                         }
                     }
@@ -163,6 +204,7 @@
                                 KSH.matrix[di][j] = KSH.matrix[i][j];
                                 KSH.matrix[i][j] = 0;
                                 KSH.update = true;
+                                KSH.swap(i, j, di, j);
                             }
                         }
                     }
@@ -185,38 +227,55 @@
                                 KSH.matrix[di][j] = KSH.matrix[i][j];
                                 KSH.matrix[i][j] = 0;
                                 KSH.update = true;
+                                KSH.swap(i, j, di, j);
                             }
                         }
                     }
                 }
             };
 
+            KSH.startGame = function() {
+                KSH.inGame = true;
+                KSH.createMatrix();
+                KSH.createGrid();
+                KSH.generate();
+                KSH.drawMatrix();                
+            };
+
+
             // Begin
-            KSH.createMatrix();
-            KSH.generate();
-            KSH.drawMatrix();
+            KSH.startGame();
 
             $('body').on('keyup', function(ev) {
-                switch(ev.keyCode) {
-                    case 38:
-                        KSH.up();
-                        break;
-                    case 40:
-                        KSH.down();
-                        break;
-                    case 37:
-                        KSH.left();
-                        break;
-                    case 39:
-                        KSH.right();
-                        break;
-                }
-
-                if (KSH.update) {
-                    console.log('updating');
-                    KSH.update = false;
-                    KSH.generate();
-                    KSH.drawMatrix();
+                if (KSH.inGame) {
+                    switch(ev.keyCode) {
+                        case 38:
+                            KSH.up();
+                            break;
+                        case 40:
+                            KSH.down();
+                            break;
+                        case 37:
+                            KSH.left();
+                            break;
+                        case 39:
+                            KSH.right();
+                            break;
+                    }
+    
+                    if (KSH.update) {
+                        console.log('updating');
+                        KSH.update = false;
+                        KSH.generate();
+                        KSH.drawMatrix();
+    
+                        if (KSH.isFull()) {
+                            alert('game over man');
+                            KSH.inGame = false;
+                        }
+                    }
+                } else {
+                    alert('I told you GAME OVER, man :P');
                 }
             });
 		</script>
