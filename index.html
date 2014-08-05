@@ -20,96 +20,205 @@
                 font-family: Arial, sans;
                 line-height: 90px;
             }
+            #board div.item {
+                position: relative;
+                background-color: #ff0;
+                margin: 0;
+            }
+            textarea {
+                font-size: 32px;
+            }
         </style>
 	</head>
 	<body>
-		<div id="board">
-			
-		</div>
-
+		<div id="board"></div>
+        <textarea rows="5" cols="8"></textarea>        
 		<script>
             var KSH = {};
 
-            //config object
-            KSH.config = {};
-            KSH.config.h = 4;
-            KSH.config.w = 4;
-            KSH.config.container = '#board';
+            // Config
+            KSH.w = 4;
+            KSH.h = 4;
+            KSH.len = 90;
+            KSH.container = '#board';
+            KSH.update = false;
 
-            //methods
-            KSH.methods = {};
-            KSH.methods.iterate = function(fn) {
-                for (i = 0; i < KSH.config.h; ++i) {
-                    for (j = 0; j < KSH.config.w; ++j) {
-                        fn(j, i, j + '' + i);
+            // Methods
+            KSH.createMatrix = function() {
+                KSH.matrix = new Array(KSH.w);
+
+                for (i = 0; i < KSH.w; ++i) {
+                    KSH.matrix[i] = new Array(KSH.h);
+
+                    for (j = 0; j < KSH.h; ++j) {
+                        KSH.matrix[i][j] = 0;
                     }
                 }
             };
-            KSH.methods.isFull = function() {
-                var full = true;
 
-                KSH.methods.iterate(function(x, y, index) {
-                    if ($('#' + index).html() == '') {
-                        full = false;
+            KSH.drawMatrix = function() {
+                var str = '';
+
+                for (j = 0; j < KSH.h; ++j) {
+                    for (i = 0; i < KSH.w; ++i) {
+                        str = str + KSH.matrix[i][j] + ' ';
                     }
-                });
 
-                return full;
-            };
-            KSH.methods.drawBoard = function() {
-                KSH.methods.iterate(function (x, y) {
-                    console.log('adding', x, y);
-                    var div = $('<div id="' + x + '' + y + '"></div>');
-                    $(KSH.config.container).append(div);
-                });
-            };
-            KSH.methods.generate = function() {
-                if (KSH.methods.isFull()) {
-                    console.log('we \'re full');
-                    return
+                    str = str + '\n';
                 }
 
-                var x = Math.round(Math.random() * KSH.config.w);
-                var y = Math.round(Math.random() * KSH.config.h);
-                var item = Math.round(Math.random() * 3); //Basic element generation
-                var index = KSH.methods.getIndex(x, y);
+                $('textarea').html(str);
+            };
 
-                if ($(index).html() == '') {
-                    $(index).html(item);
+            KSH.isFull = function() {
+                for (j = 0; j < KSH.h; ++j) {
+                    for (i = 0; i < KSH.w; ++i) {
+                        if (KSH.matrix[i][j] == 0) {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            };
+
+            KSH.generate = function() {
+                if (KSH.isFull()) {
+                    console.log('we are full');
+                    return false;
+                }
+
+                var item = Math.round(Math.random() * 2) + 1;
+                var x = Math.round(Math.random() * (KSH.w - 1));
+                var y = Math.round(Math.random() * (KSH.h - 1));
+
+                if (KSH.matrix[x][y] != 0) {
+                    console.log('crap');
+                    KSH.generate();
                 } else {
-                    KSH.methods.generate();
+                    KSH.matrix[x][y] = item;
                 }
+
+                return true;
             };
-            /* Refactor these */
-            KSH.methods.up = function() {
-                for (j = 1; j < KSH.config.h; ++j) {
-                    for (i = 0; i < KSH.config.w; ++i) {
-                        var index = KSH.methods.getIndex(i, j);
 
-                        if ($(index).html() != '') {
+            KSH.up = function() {
+                for (j = 0; j < KSH.h; ++j) {
+                    for (i = 0; i < KSH.w; ++i) {
+                        if (KSH.matrix[i][j] != 0) {
                             var dj = j - 1;
-                            var dindex = KSH.methods.getIndex(i, dj);
-                            var item = $(index).html();
 
-                            while ($(dindex).html() == '' && dj >= 0) {
-                                $(index).html('');
-                                $(dindex).html(item);
-                                --dj;
-                                index = dindex;
-                                dindex = KSH.methods.getIndex(i, dj);
+                            while (dj >= 0 && KSH.matrix[i][dj] == 0) {
+                                dj--;
+                            }
+
+                            // Movement
+                            dj++;
+
+                            if (dj != j) {
+                                KSH.matrix[i][dj] = KSH.matrix[i][j];
+                                KSH.matrix[i][j] = 0;
+                                KSH.update = true;
                             }
                         }
                     }
                 }
             };
-            KSH.methods.getIndex = function(x, y) {
-                return '#' + x + '' + y;
-            }
+            KSH.down = function() {
+                for (j = KSH.h - 1; j >= 0; --j) {
+                    for (i = 0; i < KSH.w; ++i) {
+                        if (KSH.matrix[i][j] != 0) {
+                            var dj = j + 1;
 
-            //fire it up
-            KSH.methods.drawBoard();
-            KSH.methods.generate();
+                            while (dj < KSH.h && KSH.matrix[i][dj] == 0) {
+                                dj++;
+                            }
 
+                            // Movement
+                            dj--;
+
+                            if (dj != j) {
+                                KSH.matrix[i][dj] = KSH.matrix[i][j];
+                                KSH.matrix[i][j] = 0;
+                                KSH.update = true;
+                            }
+                        }
+                    }
+                }
+            };
+            KSH.left = function() {
+                for (i = 0; i < KSH.w; ++i) {
+                    for (j = 0; j < KSH.h; ++j) {
+                        if (KSH.matrix[i][j] != 0) {
+                            var di = i - 1;
+
+                            while (di >= 0 && KSH.matrix[di][j] == 0) {
+                                di--;
+                            }
+
+                            // Movement
+                            di++;
+
+                            if (di != i) {
+                                KSH.matrix[di][j] = KSH.matrix[i][j];
+                                KSH.matrix[i][j] = 0;
+                                KSH.update = true;
+                            }
+                        }
+                    }
+                }
+            };
+            KSH.right = function() {
+                for (i = KSH.w - 1; i >= 0; --i) {
+                    for (j = 0; j < KSH.h; ++j) {
+                        if (KSH.matrix[i][j] != 0) {
+                            var di = i + 1;
+
+                            while (di < KSH.w && KSH.matrix[di][j] == 0) {
+                                di++;
+                            }
+
+                            // Movement
+                            di--;
+
+                            if (di != i) {
+                                KSH.matrix[di][j] = KSH.matrix[i][j];
+                                KSH.matrix[i][j] = 0;
+                                KSH.update = true;
+                            }
+                        }
+                    }
+                }
+            };
+
+            // Begin
+            KSH.createMatrix();
+            KSH.generate();
+            KSH.drawMatrix();
+
+            $('body').on('keyup', function(ev) {
+                switch(ev.keyCode) {
+                    case 38:
+                        KSH.up();
+                        break;
+                    case 40:
+                        KSH.down();
+                        break;
+                    case 37:
+                        KSH.left();
+                        break;
+                    case 39:
+                        KSH.right();
+                        break;
+                }
+
+                if (KSH.update) {
+                    console.log('updating');
+                    KSH.update = false;
+                    KSH.generate();
+                    KSH.drawMatrix();
+                }
+            });
 		</script>
 	</body>
 </html>
