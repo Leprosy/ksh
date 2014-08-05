@@ -46,6 +46,7 @@
             KSH.container = '#board';
             KSH.update = false;
             KSH.inGame = false;
+            KSH.block = true;
 
             // Methods
             KSH.index = function(x, y) {
@@ -73,7 +74,7 @@
                 }
             };
 
-            KSH.drawMatrix = function() {
+            KSH.drawDebugMatrix = function() {
                 /* Debug */
                 var str = '';
 
@@ -102,11 +103,10 @@
 
             KSH.generate = function() {
                 if (KSH.isFull()) {
-                    console.log('we are full');
                     return false;
                 }
 
-                var item = Math.round(Math.random() * 2) + 1;
+                var item = Math.round(Math.random() * 3) + 1;
                 var x = Math.round(Math.random() * (KSH.w - 1));
                 var y = Math.round(Math.random() * (KSH.h - 1));
 
@@ -122,7 +122,10 @@
                     });
 
                     $(KSH.container).append(tile);
-                    tile.fadeIn(1000);
+
+                    tile.fadeIn(500, function() {
+                        KSH.block = false;
+                    });
                 }
 
                 return true;
@@ -130,11 +133,10 @@
 
             KSH.swap = function(x1, y1, x2, y2) {
                 var tile = $("div#" + KSH.index(x1, y1) + ".tile");
-                console.log(tile)
                 tile.animate({
                     top: y2 * KSH.len, left: x2 * KSH.len
                 },{
-                    duration: 200,
+                    duration: 100,
                     complete: function() {
                         $(this).attr('id', KSH.index(x2, y2));
                     }
@@ -235,11 +237,12 @@
             };
 
             KSH.startGame = function() {
+                $(KSH.container).html('');
                 KSH.inGame = true;
                 KSH.createMatrix();
                 KSH.createGrid();
                 KSH.generate();
-                KSH.drawMatrix();                
+                KSH.drawDebugMatrix(); // Debug code
             };
 
 
@@ -247,36 +250,47 @@
             KSH.startGame();
 
             $('body').on('keyup', function(ev) {
-                if (KSH.inGame) {
-                    switch(ev.keyCode) {
-                        case 38:
-                            KSH.up();
-                            break;
-                        case 40:
-                            KSH.down();
-                            break;
-                        case 37:
-                            KSH.left();
-                            break;
-                        case 39:
-                            KSH.right();
-                            break;
-                    }
-    
-                    if (KSH.update) {
-                        console.log('updating');
-                        KSH.update = false;
-                        KSH.generate();
-                        KSH.drawMatrix();
-    
-                        if (KSH.isFull()) {
-                            alert('game over man');
-                            KSH.inGame = false;
-                        }
-                    }
-                } else {
+                /* You are blocked */
+                if (KSH.block) {
+                    console.log('crap')
+                    return;
+                }
+
+                /* Terminated */
+                if (!KSH.inGame) {
                     alert('I told you GAME OVER, man :P');
                 }
+
+                KSH.block = true;
+
+                switch(ev.keyCode) {
+                    case 38:
+                        KSH.up();
+                        break;
+                    case 40:
+                        KSH.down();
+                        break;
+                    case 37:
+                        KSH.left();
+                        break;
+                    case 39:
+                        KSH.right();
+                        break;
+                }
+
+                if (KSH.update) {
+                    KSH.update = false;
+                    KSH.generate();
+                    KSH.drawDebugMatrix(); // Debug code
+
+                    if (KSH.isFull()) {
+                        alert('game over man');
+                        KSH.inGame = false;
+                    }
+                } else {
+                    KSH.block = false;
+                }
+
             });
 		</script>
 	</body>
