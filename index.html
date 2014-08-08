@@ -2,6 +2,11 @@
 	<head>
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
         <style>
+            h1 {
+                margin-top: 5%;
+                font-family: Arial, sans;
+                text-align: center;
+            }
             #board {
                 position: relative;
                 background-color: #ccc;
@@ -35,12 +40,33 @@
                 box-shadow: 1px 1px 2px #666;
             }
             textarea {
-                display: none;
+                /* display: none; */
+            }
+            .button {
+                text-decoration: none;
+                box-shadow: 1px 1px 2px #000;
+                display: block;
+                margin: 10px auto;
+                width: 60px; 
+                background-color: #ccc;
+                color: #fff;
+                border-radius: 5px;
+                font-family: Arial, sans;
+                text-align: center;
+                padding: 5px;
+            }
+            .button:active {
+                position: relative;
+                box-shadow: none;
+                top: 1px;
+                left: 1px;
             }
 
         </style>
 	</head>
 	<body>
+        <h1>.ksh</h1>
+        <a class="button" href="javascript:KSH.startGame()">Restart</a>
 		<div id="board"></div>
         <textarea rows="5" cols="8"></textarea>
 		<script>
@@ -146,20 +172,29 @@
                     duration: 100,
                     complete: function() {
                         $(this).attr('id', KSH.index(x2, y2));
+                        $(this).html(KSH.matrix[x2][y2]);
                     }
                 });
             };
 
+            /* Refactor these */
             KSH.up = function() {
                 for (j = 0; j < KSH.h; ++j) {
                     for (i = 0; i < KSH.w; ++i) {
                         if (KSH.matrix[i][j] != 0) {
                             var dj = j - 1;
 
-                            while (dj >= 0 && KSH.matrix[i][dj] == 0) {
+                            while (dj >= 0 && KSH.matrix[i][dj] == 0){
                                 dj--;
                             }
 
+                            // Can I combine with next tile
+                            if (dj >= 0 && KSH.matrix[i][dj] == KSH.matrix[i][j]) {
+                                console.log("TOP:" , KSH.matrix[i][dj]);
+                                KSH.matrix[i][j] = KSH.matrix[i][j] * 2; // just sums things
+                                dj--;
+                            }
+                            
                             // Movement
                             dj++;
 
